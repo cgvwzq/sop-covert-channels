@@ -2,7 +2,7 @@
 
 In computer security, a covert channel is a mechanism that allows an attacker to transfer information between objects or processes that were not supposed to be allowed to communicate. In the context of browsers, I specifically refer to the procedures that can be used to transmit information across windows on different domains. Below there are several examples of this technique, that in some case can arrrive to be exploited for leaking information via side channel attacks.
 
-I have created some PoCs to send information across `window`s (iframes or tabs) with different `origin`. Online version can be found: [http://vwzq.net/lab/covert/]
+I have created some PoCs to send information across `window`s (iframes or tabs) with different `origin`. Online version can be found: http://vwzq.net/lab/covert/
 
 Sources are divided into "senders" and "receivers", since each set should be in a different domain.
 
