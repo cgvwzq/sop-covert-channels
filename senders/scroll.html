@@ -1,0 +1,56 @@
+<h1>cross-domain communication measuring scrollbar position</h1>
+<input id="input"><button onclick="foo()">Send</button>
+<input checked type="radio" name="opt" value="iframe">Iframe
+<input type="radio" name="opt" value="opener">Open tab<br>
+<br><br>
+<iframe style="width:60%;height:200px" id="recv"></iframe>
+<script>
+    var msg, opt, code;
+    var url = 'http://demo.vwzq.net/covert/scroll_r.html';
+
+    function foo() {
+        msg = document.getElementById('input').value;
+        opt = document.getElementsByName('opt')[0];
+
+        if (opt.checked) {
+            window.frames[0].location = url;
+            wait_until_soperr(window.frames[0], start);
+        } else {
+            window.open(url, 'receiver');
+            setTimeout(function(){start()}, 1000);
+        }
+
+    }
+
+    function start() {
+        code = msg.split("").map(e=>e.charCodeAt(0));
+        code.push(0);
+        setTimeout(sendByte, 1000, 0);
+    }
+ 
+    // tests SOP error at ref and triggers callback 
+    function wait_until_soperr(ref, callback, args) {
+        console.log("wait_until_soperr");
+        try {
+            ref.location.href;
+            setTimeout(arguments.callee, 10, ref, callback, args);
+        } catch (e) {
+            // starts loop at position 0
+            callback(args);
+        }
+    }
+
+    // sets the location.hash to specific id
+    function sendByte(i) {
+        if (i == code.length)
+            return;
+
+        if (opt.checked) {
+            window.frames[0].location = url + "#" + code[i];
+        } else {
+            window.open(url + "#" + code[i], 'receiver');
+        }
+
+        setTimeout(arguments.callee, 100, i+1);
+    }
+</script>

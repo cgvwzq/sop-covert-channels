@@ -1,0 +1,32 @@
+<script>
+function print(msg) {
+    document.getElementById('at').innerText = document.origin;
+    document.getElementById('msg').value += msg;
+}
+// receiver
+var first;
+window.onload = function() {
+    for (var i=0; i<256; i++) {
+        var c = document.createElement('div');
+        c.id = i; c.style.height = "100px";
+        document.body.appendChild(c);
+    }
+    location.hash = 0;
+    first = window.pageYOffset;
+    location.hash = "";
+}
+
+window.onscroll = function() {
+    var code = (window.scrollY - first)/100;
+    if (code > 0) {
+        console.log(code);
+        print(String.fromCharCode(code));
+    } else {
+        //window.onscroll = null;
+        window.scrollTo(window,0);
+    }
+}
+</script>
+<div>msg received at <code id="at"></code>:<br><br>
+    <textarea style="width:300px; height: 100px;" readonly id="msg"></textarea>
+</div><br>

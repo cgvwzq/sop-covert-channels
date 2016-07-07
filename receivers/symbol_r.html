@@ -1,0 +1,15 @@
+<script>
+function print(msg) {
+    document.getElementById('at').innerText = document.origin;
+    document.getElementById('msg').value = msg;
+}
+// receiver
+window.onload = function() {
+    var ref = opener || parent;
+    print(ref.toString().slice(8,-1));
+}
+</script>
+<div>msg received at <code id="at"></code>:<br><br>
+    <textarea style="width:300px; height: 100px;" readonly id="msg"></textarea>
+</div><br>
+<button onclick="window.close();location='http://vwzq.net/empty'">Volver</button>

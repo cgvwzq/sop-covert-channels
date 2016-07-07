@@ -1,0 +1,77 @@
+<h1>cross-domain communication using <code>history.length</code></h1>
+<input id="msg"><button onclick="foo()">Send</button>
+<br><br>
+<iframe style="width:60%;height:200px" src="" id="recv"></iframe>
+<script>
+    var msg, seq, init;
+    var url = 'http://demo.vwzq.net/covert/historylength2_r.html';
+
+    // conversion table
+    function index(l) {
+        // TODO: use a table ordered by frequency maybe? some hoffman encoding
+        // history.length maximum is 50 so we only use a-z0-9 
+        // +1 necessary to distinguish between send or no send
+        if (l.match(/[A-Za-z]/)) return l.toLowerCase().charCodeAt(0)-97+1; 
+        else if (l.match(/[0-9]/)) return 26+l.charCodeAt(0)-48+1;
+        else if (l.match(/\s+/)) return 38; 
+    }
+
+    // main function
+    function foo() {
+        // reset for resending
+        location.hash = "xxx";
+        msg = document.getElementById('msg').value;
+        seq = msg.replace(/[^a-zA-Z0-9\s]/g,'').split("").map(index);
+        console.log("setting url");
+        window.frames[0].location = url;
+        // when page successfuly loaded, go to loop
+        setTimeout(wait_until_soperr, 100, window.frames[0], loop); 
+    }
+
+    // tests SOP error at ref and triggers callback
+    function wait_until_soperr(ref, callback) {
+        console.log("wait_until_soperr");
+        try {
+            ref.location.href;
+            setTimeout(arguments.callee, 10, ref, callback);
+        } catch (e) {
+            // starts loop at position 0
+            init = history.length;
+            console.log("loaded, goto loop");
+            callback(0);
+        }
+    }
+
+    // sends byte and waits for reset (history.length reduced)
+    function loop(i) {
+        if (i < seq.length) {
+            console.log("sending " + msg[i] + " as " + seq[i]);
+            sendByte(seq[i]);
+            setTimeout(wait_until_reset, 10, arguments.callee, i+1);
+        } else {
+            sendByte(40); // EOF
+        }
+    }
+
+    // waits receiver to signal via popstate and triggers callback
+    function wait_until_reset(callback, args) {
+        console.log("wait_until_reset");
+        window.onpopstate = function() {
+            if (history.length == init) {
+                console.log("reset");
+                window.onpopstate = null;
+                callback(args);
+            }
+        }
+    }
+
+    // increments history.length by N (poping child's state)
+    function sendByte(n) {
+        if (n>0) {
+            window.frames[0].location = url + "#" + Math.random(n);
+            setTimeout(arguments.callee, 1, n-1);
+        } else {
+            console.log("eot");
+        }
+    }
+</script>

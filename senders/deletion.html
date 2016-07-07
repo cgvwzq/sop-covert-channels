@@ -1,0 +1,66 @@
+<h1>cross-domain communication via deletion of cross-referenceable properties</h1>
+<input id="msg"><button onclick="foo()">Send</button>
+<input checked type="radio" name="opt" value="iframe">Iframe
+<input type="radio" name="opt" value="opener">Open tab<br>
+<br><br>
+<iframe style="width:60%;height:200px" src="" id="recv"></iframe>
+<script>
+    var xprop = ['postMessage', 'focus', 'blur', 'close', 'opener', 'parent', 'frames', 'closed'];
+    var msg, i, opt;
+    var url = 'http://demo.vwzq.net/covert/deletion_r.html';
+
+    window.onload = function() {
+        var c = document.cookie.split(";").filter(c=>c.split("=")[0] == "state")[0], state;
+        if (c) c = c.split("=")[1];
+        state = c ? c.split(":") : [];
+        if (state.length == 3) {
+            msg = state[0];
+            i =  parseInt(state[1], 10);
+            opt = state[2];
+            foo();
+        } 
+    }
+
+    function foo() {
+
+        if (!msg) msg  = document.getElementById('msg').value.replace(/:=;/g,'');
+        if (!opt) opt = document.getElementsByName('opt')[0].checked.toString();
+        if (!i) i = 0;
+
+        if (i < msg.length) {
+
+            // codification
+            var code = msg.charCodeAt(i);
+            if (code & 0b10000000) delete window[xprop[0]];
+            if (code & 0b01000000) delete window[xprop[1]];
+            if (code & 0b00100000) delete window[xprop[2]];
+            if (code & 0b00010000) delete window[xprop[3]];
+            if (code & 0b00001000) delete window[xprop[4]];
+            if (code & 0b00000100) delete window[xprop[5]];
+            if (code & 0b00000010) delete window[xprop[6]];
+            if (code & 0b00000001) delete window[xprop[7]];
+
+            // update state
+            document.cookie = "state=" + msg + ":" + (i+1) + ":" + opt;
+
+        } else {
+            // msg completed, reset state
+            delete window['length'];
+            document.cookie = "state=";
+        }
+
+        reader();
+
+    }
+
+    function reader() {
+
+        // load receiver
+        if (opt == "true") {
+            recv.contentWindow.location = url;
+        } else {
+            window.open(url, '_msg');
+        }
+
+    }
+</script>

@@ -1,0 +1,50 @@
+<script>
+function print(msg) {
+    document.getElementById('at').innerText = document.origin;
+    document.getElementById('msg').value += msg;
+}
+// receiver
+var xprop = ['postMessage', 'focus', 'blur', 'close', 'opener', 'parent', 'frames', 'closed'];
+var msg, ref;
+window.onload = function() {
+    var c = document.cookie.split(";").filter(c=>c.split("=")[0] == "state")[0];
+    msg = c? c.split("=")[1] : "";
+
+    // distinct between iframe and new tab
+    if (opener) {
+        ref = opener;
+    } else {
+        ref = parent;
+    }
+
+    // print previous message
+    if (msg) print(msg);
+
+    // decodification
+    var input = "", recv;
+    for (var i=0;i<xprop.length;i++) {
+        try {
+            ref[xprop[i]];
+            input += "0";
+        } catch(e) {
+            input += "1";
+        }
+    }
+    recv = String.fromCharCode(parseInt(input, 2));
+    print(recv);
+    document.cookie = "state=" + msg + recv;
+    
+    // check if EOF
+    try {
+        ref['length'];
+        ref.location = "http://vwzq.net/lab/covert/deletion.html";
+    } catch(e) {
+        print("\n=EOF=");
+    }
+
+}
+</script>
+<div>msg received at <code id="at"></code>:<br><br>
+    <textarea style="width:300px; height: 100px;" readonly id="msg"></textarea>
+</div><br>
+<button onclick="document.cookie='state=';document.getElementById('msg').value=''">Clear</button>

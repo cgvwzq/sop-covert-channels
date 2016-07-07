@@ -1,0 +1,62 @@
+<h1>cross-domain communication using timing measurements introduced by the message loop</h1>
+<input id="msg"><button onclick="foo()">Send</button>
+<br><br>
+<iframe style="width:60%;height:200px" src="" id="recv"></iframe>
+<script>
+
+    var T = 5, E = 8, msg;
+
+    function foo() { 
+        var opt = document.getElementsByName('opt')[0], url = 'http://demo.vwzq.net/covert/messageloop_r.html';
+        msg = document.getElementById('msg').value
+        window.frames[0].location = url;
+        wait_until_soperr(window.frames[0], init);
+    }
+
+    function wait_until_soperr(ref, callback, args) {
+        console.log("wait_until_soperr");
+        try {
+            ref.location.href;
+            setTimeout(arguments.callee, 10, ref, callback);
+        } catch (e) {
+            // starts loop at position 0
+            console.log("loaded, goto loop");
+            setTimeout(function(){callback.apply(this, args)}, 300);
+        }
+    }
+
+    function consume() {
+        var t = performance.now();
+        while (performance.now() - t < E);
+    }
+
+    function send(arr, i){
+        if (i < arr.length) {
+            if (arr[i] == "1") {
+                consume();
+                console.log("send 1");
+            } else {
+                console.log("send 0");
+            }
+            setTimeout(arguments.callee, T, arr, i+1);
+        } else {
+            console.log("end of send");
+        }
+    }
+
+    function init() {
+        // convert each letter into 8-bit
+        console.log(msg);
+
+        var code = msg.split('').map(e=>("00000000"+e.charCodeAt(0).toString(2)).slice(-8)).join('').split(''), i;
+        console.log(code);
+        console.log(code.length);
+
+        // start measuring (send 1)
+        consume();
+
+        // send message
+        setTimeout(send, T, code, 0);
+                
+    }
+</script>

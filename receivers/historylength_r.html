@@ -1,0 +1,73 @@
+<script>
+function print(msg) {
+    document.getElementById('at').innerText = document.origin;
+    document.getElementById('msg').value += msg;
+}
+
+// receiver
+var init, counter, old_counter;
+
+// convert
+function toChar(i) {
+    if (i < 27) return String.fromCharCode(i+97-1);
+    else if(i < 37) return String.fromCharCode(i+21);
+    else return " ";
+}
+
+window.onload = function() {
+    console.log("%cloaded" , "color:red");
+    parent.location = "http://vwzq.net/lab/covert/historylength.html#init";
+    // we need asynchronous call to refresh history.length, no idea why yet :S
+    // probably the value is not propagated until we free the thread
+    setTimeout(function(){
+        counter = init = history.length;
+        old_counter = -1;
+        setTimeout(listen, 100);
+    },1);
+}
+
+// check when transmission starts
+function listen() {
+    console.log("%clistening..."+history.length+":"+init, "color:red");
+    if (history.length > init) { // +1 probably?
+        setTimeout(recv, 10);
+    } else {
+        setTimeout(arguments.callee, 10);
+    }
+}
+
+// reads transmitted data
+function recv() {
+    var chr;
+    if (counter == old_counter) {
+        if (counter == 40) {
+            history.go(-counter-2); // reset 
+            print("\n=EOF=");
+        } else {
+            chr = toChar(counter);
+            print(chr); // print received byte
+            console.log("%creceived 1 byte" + " (" + chr + ")", "color:red");
+            history.go(-counter-1); // reset history
+            setTimeout(function(){
+                console.log("%creset", "color:red");
+                parent.location = "http://vwzq.net/lab/covert/historylength.html#overwrite" + Math.random();
+                // again we need asynchronous call to refresh history.length
+                // THERE IS A RACE CONDITION BETWEEN THIS AN PARENT'S WAIT_UNTIL_RESET,
+                // WITH MINOR DELAY IT FAILS, AND EVEN WITH THIS IT BREAKS SOMETIMES
+                setTimeout(function(){
+                    counter = history.length;
+                    old_counter = -1;
+                    setTimeout(listen, 100);
+                },100);
+            }, 10);
+        }
+    } else {
+        old_counter = counter;
+        counter = history.length - init;
+        setTimeout(recv, 1);
+    }
+}
+</script>
+<div>msg received at <code id="at"></code>:<br><br>
+    <textarea style="width:300px; height: 100px;" readonly id="msg"></textarea>
+</div><br>

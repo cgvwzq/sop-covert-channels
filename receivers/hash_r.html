@@ -1,0 +1,16 @@
+<script>
+function print(msg) {
+    document.getElementById('at').innerText = document.origin;
+    document.getElementById('msg').value += msg + "\n";
+}
+// receiver
+window.onload = function() {
+    print(location.hash.slice(1));
+}
+window.onhashchange = function() {
+    print(location.hash.slice(1));
+}
+</script>
+<div>msg received at <code id="at"></code>:<br><br>
+    <textarea style="width:300px; height: 100px;" readonly id="msg"></textarea>
+</div>

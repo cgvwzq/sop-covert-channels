@@ -1,0 +1,79 @@
+<h1>cross-domain communication using <code>window.frames.length</code></h1>
+<input id="msg"><button onclick="foo()">Send</button>
+<br><br>
+<iframe style="width:60%;height:200px" id="recv"></iframe>
+<iframe hidden id="arbit"></iframe>
+<div hidden id="land"></div>
+<script>
+    var msg, seq, init, url = 'http://demo.vwzq.net/';
+
+    // conversion table
+    function index(l) {
+        // TODO: use a table ordered by frequency maybe? some hoffman encoding
+        // history.length maximum is 50 so we only use a-z0-9 
+        // +1 necessary to distinguish between send or no send
+        if (l.match(/[A-Za-z]/)) return l.toLowerCase().charCodeAt(0)-97+1; 
+        else if (l.match(/[0-9]/)) return 26+l.charCodeAt(0)-48+1;
+        else if (l.match(/\s+/)) return 38; 
+    }
+
+    // main function
+    function foo() {
+        msg = document.getElementById('msg').value;
+        seq = msg.replace(/[^a-zA-Z0-9\s]/g,'').split("").map(index);
+        land.innerHTML = "";
+        window.frames[1].location = url;
+        setTimeout(wait_until_soperr, 10, window.frames[1], foo2);
+    }
+
+    function foo2() {
+        recv.contentWindow.location = 'http://demo.vwzq.net/covert/windowframes_r.html';
+        // when page successfuly loaded, go to loop
+        setTimeout(wait_until_soperr, 10, window.frames[0], wait_until_reset, [loop, [0]]);
+    }
+
+    // tests SOP error at ref and triggers callback
+    function wait_until_soperr(ref, callback, args) {
+        try {
+            ref.location.href;
+            setTimeout(arguments.callee, 10, ref, callback, args);
+        } catch (e) {
+            callback.apply(this, args);
+        }
+    }
+
+    // tests arbtit for ready_to_receive triggers callback
+    function wait_until_reset(callback, args) {
+        try {
+            window.frames[1].location.href;
+            // clean previous message
+            land.innerHTML = "";
+            callback.apply(this, args);
+        } catch (e) {
+            setTimeout(arguments.callee, 10, callback, args);
+        }
+    }
+
+    // sends byte and waits for reset (arbit in domain reduced)
+    function loop(i) {
+        if (i < seq.length) {
+            console.log("sending " + msg[i] + " as " + seq[i]);
+            sendByte(seq[i]);
+            // switch state
+            window.frames[1].location = url;
+            setTimeout(wait_until_soperr, 10, window.frames[1], wait_until_reset , [loop,[i+1]]);
+        } else {
+            land.innerHTML = ''; //EOF
+            window.frames[1].location = url;
+        }
+    }
+
+    // creates N iframes 
+    function sendByte(n) {
+        if (n>0) {
+            for(var i=0;i<n;i++) land.appendChild(document.createElement('iframe'));
+        } else {
+            console.log("eot");
+        }
+    }
+</script>

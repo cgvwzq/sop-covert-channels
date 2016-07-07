@@ -1,0 +1,59 @@
+<script>
+function print(msg) {
+    document.getElementById('msg').value += msg;
+}
+// receiver
+var t1, t2, T = 5, E = 8;
+window.onload = function() {
+    document.getElementById('at').innerText = document.origin;
+    t1 = performance.now();
+    setTimeout(pre, 0);
+}
+
+// buffer for inputs, end, length of buffer
+var buffer = "", c = false, l = 0;
+
+function pre() {
+    t2 = performance.now();
+    if (t2 - t1 < E) {
+        t1 = performance.now();
+        setTimeout(pre, T);
+    } else {
+        t1 = performance.now();
+        setTimeout(foo, T);
+    }
+}
+
+function foo() {
+    t2 = performance.now();
+    if (t2 - t1 < E) {
+        buffer += "0"; 
+        console.log("received 0");
+    } else {
+        c = true;
+        buffer += "1"; 
+        console.log("received 1");
+    }
+    l = l + 1;
+    if (l % 8 == 0) if (!c) return staph(); else c = false;
+    t1 = performance.now();
+    setTimeout(foo, T);
+}
+
+function staph() {
+    console.log("received eot");
+    print(bufferToString(buffer));
+    buffer = "";
+    t1 = performance.now();
+    setTimeout(pre, 0);
+}
+
+function bufferToString(b) {
+    console.log(b);
+    return b.match(/.{8}/g).map(e=>String.fromCharCode(parseInt(e,2))).join("");
+}
+</script>
+<div>msg received at <code id="at"></code>:<br><br>
+    <textarea style="width:300px; height: 100px;" readonly id="msg"></textarea>
+</div><br>
+<button onclick="window.close()">Volver</button>

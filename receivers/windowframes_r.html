@@ -1,0 +1,76 @@
+<script>
+function print(msg) {
+    document.getElementById('at').innerText = document.origin;
+    document.getElementById('msg').value += msg;
+}
+
+// receiver
+var init, sender, domain = 'http://vwzq.net/';
+
+// convert
+function toChar(i) {
+    if (i < 27) return String.fromCharCode(i+97-1);
+    else if(i < 37) return String.fromCharCode(i+21);
+    else return " ";
+}
+
+window.onload = function() {
+    if (opener) {
+        sender = opener;
+    } else {
+        sender = parent;
+    }
+    if (!sender) {
+        console.log("%cerror" , "color:red");
+        return;
+    }
+    init = sender.length;
+    console.log("%cloaded init = " + init, "color:red");
+    // go to next state switching sender's domain
+    sender.frames[1].location = domain;
+    setTimeout(wait_until_soperr, 1, sender.frames[1], listen);
+}
+
+// tests SOP error at ref and triggers callback
+function wait_until_soperr(ref, callback, args) {
+    try {
+        ref.location.href;
+        setTimeout(arguments.callee, 10, ref, callback, args);
+    } catch (e) {
+        // starts loop at position 0
+        callback.apply(this, args);
+    }
+}
+
+// waits until sender completes message and goes to recv
+function listen() {
+    try {
+        sender.frames[1].location.href;
+        recv();
+    } catch (e) {
+        setTimeout(arguments.callee, 10); 
+    }    
+}
+
+// reads transmitted data
+function recv() {
+    var l, chr;
+    
+    l = sender.length || 0;
+
+    if (l > init) {
+        chr = toChar(l-init);
+        print(chr); // print received byte
+        console.log("%creceived 1 byte" + " (" + chr + ")", "color:red");
+        // switch state and listen again
+        sender.frames[1].location = domain;
+        setTimeout(wait_until_soperr, 1, sender.frames[1], listen);
+    } else {
+        sender.frames[1].location = domain;
+        print("\n=EOF=");
+    }
+}
+</script>
+<div>msg received at <code id="at"></code>:<br><br>
+    <textarea style="width:300px; height: 100px;" readonly id="msg"></textarea>
+</div><br>

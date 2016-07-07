@@ -1,0 +1,72 @@
+<script>
+function print(msg) {
+    document.getElementById('at').innerText = document.origin;
+    document.getElementById('msg').value += msg;
+}
+
+// receiver
+var init, t;
+var sender_url = "http://vwzq.net/lab/covert/historylength2.html";
+
+// convert
+function toChar(i) {
+    if (i < 27) return String.fromCharCode(i+97-1);
+    else if(i < 37) return String.fromCharCode(i+21);
+    else return " ";
+}
+
+window.onload = function() {
+    console.log("%cloaded" , "color:red");
+    parent.location = sender_url + "#init";
+    // we need asynchronous call to refresh history.length, no idea why yet :S
+    // probably the value is not propagated until we free the thread
+    setTimeout(function(){
+        counter = init = history.length;
+        setTimeout(listen, 1);
+    },10);
+}
+
+// check when transmission starts
+function listen() {
+    console.log("%clistening..."+history.length+":"+init, "color:red");
+    window.onpopstate = recv; // starts receiving
+}
+
+// recv several popstate events
+function recv() {
+    console.log("%cpopstate", "color:red");
+    clearInterval(t);
+    t = setTimeout(read, 100);
+}
+
+// timeout triggers if EOT, so we read
+function read() {
+    // stop listening
+    window.onpopstate = null;
+
+    var chr, counter;
+
+    // count
+    counter = history.length - init;
+    
+    // check eot or keep listening
+    if (counter == 40) {
+        history.go(-counter-2); // reset 
+        print("\n=EOF=");
+    } else {
+        chr = toChar(counter);
+        print(chr); // print received byte
+        console.log("%creceived 1 byte" + " (" + chr + ")", "color:red");
+        history.go(-counter-1); // reset history
+        setTimeout(function(){
+            console.log("%creset", "color:red");
+            parent.location = sender_url + "#overwrite" + Math.random();
+            counter = history.length;
+            listen();
+        },1);
+    }
+}
+</script>
+<div>msg received at <code id="at"></code>:<br><br>
+    <textarea style="width:300px; height: 100px;" readonly id="msg"></textarea>
+</div><br>

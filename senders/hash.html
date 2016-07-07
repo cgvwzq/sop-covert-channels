@@ -1,0 +1,17 @@
+<h1>cross-domain communication using <code>location.hash</code></h1>
+<input id="msg"><button onclick="foo()">Send</button>
+<input checked type="radio" name="opt" value="iframe">Iframe
+<input type="radio" name="opt" value="opener">Open tab<br>
+<br><br>
+<iframe style="width:60%;height:200px" src="http://demo.vwzq.net/covert/hash_r.html" id="recv"></iframe>
+<script>
+    function foo() {
+        var msg = document.getElementById('msg').value, opt = document.getElementsByName('opt')[0];
+        var url = 'http://demo.vwzq.net/covert/hash_r.html';
+        if (opt.checked) {
+            window.frames[0].location = url + "#" + msg;
+        } else {
+            window.open(url + "#" + msg, 'receiver');
+        }
+    }
+</script>
