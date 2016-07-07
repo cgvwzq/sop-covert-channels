@@ -4,6 +4,8 @@ In computer security, a covert channel is a mechanism that allows an attacker to
 
 I have created some PoCs to send information across `window`s (iframes or tabs) with different `origin`. Online version can be found: http://vwzq.net/lab/covert/
 
+In the online page you can find further details and a couple more of test cases that have been fixed. I also added a bonus covert-channel by using timing measurements.
+
 Sources are divided into "senders" and "receivers", since each set should be in a different domain.
 
 ## Test cases
@@ -40,8 +42,6 @@ The protocol uses an iframe as `referee` to detect when a message has been send/
 2. Sender waits the referee, creates `N` iframes and switch the `referee`
 3. Receiver waits for `referee`, reads `sender.length` and gets `N` as `sender.length-init`
 4. If not `EOF`, go to `2`
-
-In the online page you can find further details and a couple more of test cases that have been fixed. I also added a bonus covert-channel by using timing measurements.
 
 ## Side channel example
 As an example, the `history.length` test case can also be abused to leak the user's navigation history.
